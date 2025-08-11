@@ -64,6 +64,12 @@ class TestUser {
       
       if (data === '0') {
         console.log(`⏰ User ${this.userId}: Received "0" - Test ended`);
+        // Stop any pending POST requests immediately
+        this.connected = false;
+        if (this.postInterval) {
+          clearTimeout(this.postInterval);
+          this.postInterval = null;
+        }
         this.endTest();
       } else {
         console.log(`📊 User ${this.userId}: Received countdown ${data}`);
@@ -176,6 +182,42 @@ class TestUser {
     console.log(`🏁 User ${this.userId}: Test completed - Sent ${this.postCount} POST requests`);
   }
 }
+
+// Handle Ctrl+C gracefully
+process.on('SIGINT', () => {
+  console.log('\n\n🛑 Received Ctrl+C - Stopping test and showing current results...\n');
+  
+  // Stop all users
+  users.forEach(user => user.endTest());
+  clearInterval(metricsInterval);
+  
+  // Show current metrics
+  const totalTime = Math.round((Date.now() - metrics.startTime) / 1000);
+  const avgResponseTime = metrics.responseTimes.length > 0 
+    ? Math.round(metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length)
+    : 0;
+  
+  const successRate = metrics.postRequests > 0 
+    ? Math.round((metrics.postSuccesses / metrics.postRequests) * 100)
+    : 0;
+  
+  console.log(`📊 INTERRUPTED RESULTS (after ${totalTime}s):`);
+  console.log(`👥 Users: ${metrics.totalUsers} created, ${metrics.sseConnections} connected`);
+  console.log(`🔌 SSE Connections: ${metrics.sseConnections} (${metrics.sseErrors} errors)`);
+  console.log(`📤 POST Requests: ${metrics.postRequests}`);
+  console.log(`✅ Success Rate: ${successRate}%`);
+  console.log(`⚡ Average Response Time: ${avgResponseTime}ms`);
+  console.log(`📈 Requests/sec: ${Math.round(metrics.postRequests / totalTime)}`);
+  console.log(`🐌 Slow Responses (>5s): ${metrics.slowResponses.length}`);
+  console.log(`🐌 Very Slow (>10s): ${metrics.verySlowResponses.length}`);
+  
+  if (metrics.sseErrors > 0 || metrics.postErrors > 0) {
+    console.log(`\n❌ Errors logged to ${ERROR_LOG_FILE}`);
+  }
+  
+  console.log('\n✅ Test stopped - Check error-log.txt for detailed error information');
+  process.exit(0);
+});
 
 // Start the load test
 console.log(`🚀 Starting load test with ${CONCURRENT_USERS} concurrent users`);

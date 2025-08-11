@@ -6,7 +6,7 @@ use actix_files as fs;
 use actix_web::{App, HttpServer, web};
 use env_logger::Env;
 
-use test_timer::routes::{save_answers, sync_timer};
+use test_timer::routes::{connected_users, save_answers, sync_timer};
 use test_timer::models::ConnectedUsers;
 
 #[tokio::main]
@@ -22,6 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
         .app_data(web::Data::new(Arc::clone(&broad_casters_data)))
         .route("/sync-timer", web::get().to(sync_timer))
         .route("/save-answers", web::post().to(save_answers))
+        .route("/connected-users", web::get().to(connected_users))
             .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind(("0.0.0.0", port.parse::<u16>().unwrap()))?

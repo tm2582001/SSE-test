@@ -17,10 +17,18 @@ impl ConnectedUsers {
 
     pub fn remove_user(&mut self, user_id: &String){
         self.users.remove(user_id);
+
+        // if self.users.len() == 0 {
+        //     self.users.shrink_to_fit();
+        // }
     }
 
     pub fn has_user(&self, user_id: &String)->bool{
         self.users.contains(user_id)
+    }
+
+    pub fn get_connect_users_count(&self)->usize{
+        self.users.len()
     }
 
 }
