@@ -31,7 +31,7 @@ impl ConnectedUsers {
 
     pub fn get_connect_users_count(&mut self)->usize{
          if self.users.len() == 0 {
-            self.users.shrink_to_fit();
+            self.users = HashSet::<String>::new();
         }
 
         self.users.len()
