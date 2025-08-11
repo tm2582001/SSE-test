@@ -11,7 +11,7 @@ use test_timer::models::ConnectedUsers;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    env_logger::init_from_env(Env::default().default_filter_or("debug"));
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     let broad_casters_data = Arc::new(Mutex::new(ConnectedUsers::new()));
     let port = env::var("PORT").unwrap_or_else(|_| "8000".to_string());

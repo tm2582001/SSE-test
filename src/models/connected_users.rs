@@ -20,9 +20,9 @@ impl ConnectedUsers {
     pub fn remove_user(&mut self, user_id: &String){
         self.users.remove(user_id);
 
-        // if self.users.len() == 0 {
-        //     self.users.shrink_to_fit();
-        // }
+        if self.users.len() == 0 {
+            self.users.shrink_to_fit();
+        }
     }
 
     pub fn has_user(&self, user_id: &String)->bool{
