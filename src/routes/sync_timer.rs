@@ -78,17 +78,23 @@ pub async fn sync_timer(
 
     let connected_users_clone = connected_users.clone();
     tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(1));
+
         for i in (0..=360).rev() {
-            if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
-                let mut users = connected_users_clone.lock().await;
-                // println!("Client disconnected");
-                users.remove_user(&user_id);
-                
-                break;
+            tokio::select! {
+                // Wait for either the tick or the channel send failing
+                _ = interval.tick() => {
+                    if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
+                        // Client disconnected — clean up immediately
+                        let mut users = connected_users_clone.lock().await;
+                        users.remove_user(&user_id);
+                        return; // Exit the task now
+                    }
+                }
             }
-            
-            sleep(Duration::from_secs(1)).await;
         }
+
+        // Countdown finished — remove user
         let mut users = connected_users_clone.lock().await;
         users.remove_user(&user_id);
     });
