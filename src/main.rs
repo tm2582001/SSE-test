@@ -22,7 +22,7 @@ async fn main() -> Result<(), std::io::Error> {
         .app_data(web::Data::new(Arc::clone(&broad_casters_data)))
         .route("/sync-timer", web::get().to(sync_timer))
         .route("/save-answers", web::post().to(save_answers))
-            .service(fs::Files::new("/", "./public").index_file("index.html"))
+            .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind(("0.0.0.0", port.parse::<u16>().unwrap()))?
     .run()
