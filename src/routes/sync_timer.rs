@@ -70,29 +70,29 @@ pub async fn sync_timer(
     connected_users: web::Data<Shared<ConnectedUsers>>,
 ) -> sse::Sse<InfallibleStream<ReceiverStream<sse::Event>>> {
     let (tx, rx) = mpsc::channel(1);
-
+    
     let ConnectionRequest { user_id } = connetion_request.into_inner();
+    // println!("Creating channel for user {}", user_id);
 
     let mut users = connected_users.lock().await;
     users.insert_user(&user_id);
 
     let connected_users_clone = connected_users.clone();
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
 
-        for i in (0..=360).rev() {
-            tokio::select! {
-                // Wait for either the tick or the channel send failing
-                _ = interval.tick() => {
-                    if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
-                        // Client disconnected — clean up immediately
-                        let mut users = connected_users_clone.lock().await;
-                        users.remove_user(&user_id);
-                        return; // Exit the task now
-                    }
-                }
+       for i in (0..=360).rev() {
+            if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
+                // dbg!("here after failing");
+                // dbg!(i);
+                // let mut users = connected_users_clone.lock().await;
+                // println!("Client disconnected");
+                // users.remove_user(&user_id);
+                break;
             }
+            
+            sleep(Duration::from_secs(1)).await;
         }
+
 
         // Countdown finished — remove user
         let mut users = connected_users_clone.lock().await;
