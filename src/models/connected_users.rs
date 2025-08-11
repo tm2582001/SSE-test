@@ -29,7 +29,11 @@ impl ConnectedUsers {
         self.users.contains(user_id)
     }
 
-    pub fn get_connect_users_count(&self)->usize{
+    pub fn get_connect_users_count(&mut self)->usize{
+         if self.users.len() == 0 {
+            self.users.shrink_to_fit();
+        }
+
         self.users.len()
     }
 
