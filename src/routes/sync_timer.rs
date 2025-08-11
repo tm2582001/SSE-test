@@ -83,11 +83,14 @@ pub async fn sync_timer(
                 let mut users = connected_users_clone.lock().unwrap();
                 // println!("Client disconnected");
                 users.remove_user(&user_id);
-
+                
                 break;
             }
+            
             sleep(Duration::from_secs(1)).await;
         }
+        let mut users = connected_users_clone.lock().unwrap();
+        users.remove_user(&user_id);
     });
 
     sse::Sse::from_infallible_receiver(rx)

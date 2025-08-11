@@ -1,8 +1,22 @@
 const EventSource = require('eventsource');
 const axios = require('axios');
+const fs = require('fs');
 
-const BASE_URL = 'https://sse-test-hpxe.onrender.com';
-const CONCURRENT_USERS = 20;
+// const BASE_URL = 'https://sse-test-hpxe.onrender.com';
+const BASE_URL = 'https://sse-test-production.up.railway.app';
+const CONCURRENT_USERS = 20000;
+
+// Error logging setup
+const ERROR_LOG_FILE = 'error-log.txt';
+
+// Clear error log at start of test
+fs.writeFileSync(ERROR_LOG_FILE, `=== Load Test Error Log Started at ${new Date().toISOString()} ===\n\n`);
+
+function logErrorToFile(errorType, errorDetails) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${errorType}:\n${JSON.stringify(errorDetails, null, 2)}\n\n`;
+  fs.appendFileSync(ERROR_LOG_FILE, logEntry);
+}
 
 // Metrics tracking
 const metrics = {
@@ -68,6 +82,9 @@ class TestUser {
       metrics.sseErrors++;
       metrics.sseErrorDetails.push(errorDetails);
       
+      // Log error to file
+      logErrorToFile('SSE_ERROR', errorDetails);
+      
       console.log(`❌ User ${this.userId}: SSE error -`, error.message || 'Connection error');
       this.endTest();
     };
@@ -128,6 +145,9 @@ class TestUser {
         metrics.postErrors++;
         metrics.postErrorDetails.push(errorDetails);
         
+        // Log error to file
+        logErrorToFile('POST_ERROR', errorDetails);
+        
         console.log(`❌ User ${this.userId}: POST #${this.postCount} failed - ${error.response?.status || error.message} - ${duration}ms`);
       });
       
@@ -170,7 +190,12 @@ for (let i = 0; i < CONCURRENT_USERS; i++) {
   // Stagger user creation to avoid overwhelming the server
   setTimeout(() => {
     users.push(new TestUser(userId));
-  }, i * 1000); // 1 second delay between each user
+    
+    // Check if this was the last user
+    if (users.length === CONCURRENT_USERS) {
+      checkAllUsersCreated();
+    }
+  }, i * 50); // 50ms delay between each user
 }
 
 // Print metrics every 30 seconds
@@ -191,8 +216,15 @@ const metricsInterval = setInterval(() => {
   console.log('─'.repeat(50));
 }, 30000);
 
-// Cleanup after 400 seconds (10 seconds buffer after SSE ends)
-setTimeout(() => {
+// Wait for all users to be created, then run for additional time
+let allUsersCreated = false;
+const checkAllUsersCreated = () => {
+  if (users.length >= CONCURRENT_USERS && !allUsersCreated) {
+    allUsersCreated = true;
+    console.log(`\n✅ All ${CONCURRENT_USERS} users created! Running for additional 120 seconds...`);
+    
+    // Now start the cleanup timer after all users are created
+    setTimeout(() => {
   console.log('\n🏁 Test completed - Final metrics:');
   
   users.forEach(user => user.endTest());
@@ -274,4 +306,14 @@ setTimeout(() => {
   }
   
   process.exit(0);
-}, 400000);
+    }, 120000); // 120 seconds after all users are created
+  }
+};
+
+// Check every 5 seconds if all users are created
+const creationCheckInterval = setInterval(() => {
+  checkAllUsersCreated();
+  if (allUsersCreated) {
+    clearInterval(creationCheckInterval);
+  }
+}, 5000);
