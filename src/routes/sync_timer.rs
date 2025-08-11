@@ -1,11 +1,14 @@
 use std::{pin::Pin, time::Duration};
 
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{Error, HttpResponse, web};
 use actix_web_lab::{sse, util::InfallibleStream};
 use futures_util::stream::{self, Stream};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
 use tokio_stream::wrappers::ReceiverStream;
+
+use crate::models::{ConnectedUsers, Shared};
+use crate::utils::ConnectionRequest;
 
 pub async fn sync_timer_old() -> HttpResponse {
     let countdown = 360;
@@ -47,30 +50,40 @@ pub async fn sync_timer_old() -> HttpResponse {
 //         .streaming(stream)
 // }
 
+// loop {
+//     dbg!(countdown);
+//     // Create an async stream
+//     if countdown == 0 {
+//         break;
+//     }
 
-    // loop {
-    //     dbg!(countdown);
-    //     // Create an async stream
-    //     if countdown == 0 {
-    //         break;
-    //     }
+//     sleep(Duration::from_secs(1)).await;
+//     countdown -= 1;
 
-    //     sleep(Duration::from_secs(1)).await;
-    //     countdown -= 1;
-
-        // tx.send(sse::Data::new( countdown.to_string()).into()).await.unwrap();
-    // }
-
-
+// tx.send(sse::Data::new( countdown.to_string()).into()).await.unwrap();
+// }
 
 // pub async fn sync_timer() -> sse::Sse<tokio::sync::mpsc::Receiver<integer>> {
-pub async fn sync_timer() -> sse::Sse<InfallibleStream<ReceiverStream<sse::Event>>> {
+
+pub async fn sync_timer(
+    connetion_request: web::Query<ConnectionRequest>,
+    connected_users: web::Data<Shared<ConnectedUsers>>,
+) -> sse::Sse<InfallibleStream<ReceiverStream<sse::Event>>> {
     let (tx, rx) = mpsc::channel(1);
 
+    let ConnectionRequest { user_id } = connetion_request.into_inner();
+
+    let mut users = connected_users.lock().unwrap();
+    users.insert_user(&user_id);
+
+    let connected_users_clone = connected_users.clone();
     tokio::spawn(async move {
         for i in (0..=360).rev() {
             if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
-                println!("Client disconnected");
+                let mut users = connected_users_clone.lock().unwrap();
+                // println!("Client disconnected");
+                users.remove_user(&user_id);
+
                 break;
             }
             sleep(Duration::from_secs(1)).await;

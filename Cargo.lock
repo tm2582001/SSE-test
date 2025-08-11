@@ -1530,6 +1530,7 @@ dependencies = [
  "env_logger",
  "futures",
  "futures-util",
+ "serde",
  "tokio",
  "tokio-stream",
 ]
