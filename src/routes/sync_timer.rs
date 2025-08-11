@@ -73,14 +73,14 @@ pub async fn sync_timer(
 
     let ConnectionRequest { user_id } = connetion_request.into_inner();
 
-    let mut users = connected_users.lock().unwrap();
+    let mut users = connected_users.lock().await;
     users.insert_user(&user_id);
 
     let connected_users_clone = connected_users.clone();
     tokio::spawn(async move {
         for i in (0..=360).rev() {
             if tx.send(sse::Data::new(i.to_string()).into()).await.is_err() {
-                let mut users = connected_users_clone.lock().unwrap();
+                let mut users = connected_users_clone.lock().await;
                 // println!("Client disconnected");
                 users.remove_user(&user_id);
                 
@@ -89,7 +89,7 @@ pub async fn sync_timer(
             
             sleep(Duration::from_secs(1)).await;
         }
-        let mut users = connected_users_clone.lock().unwrap();
+        let mut users = connected_users_clone.lock().await;
         users.remove_user(&user_id);
     });
 

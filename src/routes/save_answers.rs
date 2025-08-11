@@ -9,7 +9,7 @@ pub async fn save_answers(
 ) -> HttpResponse {
     let ConnectionRequest { user_id } = connetion_request.into_inner();
 
-    let users = connected_users.lock().unwrap();
+    let users = connected_users.lock().await;
 
     if !users.has_user(&user_id) {
         return HttpResponse::BadRequest().finish();

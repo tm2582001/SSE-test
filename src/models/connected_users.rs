@@ -1,4 +1,6 @@
-use std::{collections::HashSet, sync::{Arc, Mutex}};
+use std::{collections::HashSet, sync::{Arc}};
+
+use tokio::sync::Mutex;
 
 pub type Shared<T> = Arc<Mutex<T>>;
 

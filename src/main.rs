@@ -1,7 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::env;
 
-
+use tokio::sync::Mutex;
 use actix_files as fs;
 use actix_web::{App, HttpServer, web};
 use env_logger::Env;
