@@ -3,8 +3,8 @@ const axios = require('axios');
 const fs = require('fs');
 
 // const BASE_URL = 'https://sse-test-hpxe.onrender.com';
-// const BASE_URL = 'https://sse-test-production.up.railway.app';
-const BASE_URL = 'https://sse-node-test-production.up.railway.app';
+const BASE_URL = 'https://sse-test-production.up.railway.app';
+// const BASE_URL = 'https://sse-node-test-production.up.railway.app';
 
 const CONCURRENT_USERS = 20000;
 
