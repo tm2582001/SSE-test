@@ -3,7 +3,9 @@ const axios = require('axios');
 const fs = require('fs');
 
 // const BASE_URL = 'https://sse-test-hpxe.onrender.com';
-const BASE_URL = 'https://sse-test-production.up.railway.app';
+// const BASE_URL = 'https://sse-test-production.up.railway.app';
+const BASE_URL = 'https://sse-node-test-production.up.railway.app';
+
 const CONCURRENT_USERS = 20000;
 
 // Error logging setup
@@ -79,6 +81,7 @@ class TestUser {
     this.sse.onerror = (error) => {
       const errorDetails = {
         userId: this.userId,
+        url: `${BASE_URL}/sync-timer?userId=${this.userId}`,
         timestamp: new Date().toISOString(),
         message: error.message || 'Connection error',
         type: error.type || 'unknown',
@@ -140,6 +143,7 @@ class TestUser {
         const errorDetails = {
           userId: this.userId,
           postCount: this.postCount,
+          url: `${BASE_URL}/save-answers?userId=${this.userId}`,
           timestamp: new Date().toISOString(),
           duration: duration,
           status: error.response?.status || 'No Status',

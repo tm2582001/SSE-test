@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+ENV MALLOC_CONF=dirty_decay_ms:0,muzzy_decay_ms:0
+
 # Set the working directory
 WORKDIR /app
 
